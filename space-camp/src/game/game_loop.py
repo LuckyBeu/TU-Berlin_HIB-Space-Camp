@@ -8,17 +8,17 @@ class GameLoop:
         self.countdown_time = countdown_time
         self.debounce_time = debounce_time
 
-        # Each task: the intro audio, and the expected button name
+        # Each task: the intro audio, and the expected button name(s)
         self.tasks = [
-            ("exercise_1", "button1"),  # index finger
-            ("exercise_2", "button2"),  # middle finger
-            ("exercise_3", "button3"),  # pinky finger
+            ("exercise_1", ["button1"]),             # index finger
+            ("exercise_2", ["button2"]),             # middle finger
+            ("exercise_3", ["button1", "button2"]),  # index + middle together
         ]
 
-    def wait_for_press(self, expected_button):
+    def wait_for_press(self, expected_buttons):
         """Wait for a button press within the countdown time.
-        Returns True if the correct button was pressed,
-        False on wrong button or timeout."""
+        Returns True if exactly the expected button(s) were pressed,
+        False on wrong button(s) or timeout."""
         deadline = time.time() + self.countdown_time
         while time.time() < deadline:
             buttons = self.glove.read_buttons()
@@ -33,10 +33,12 @@ class GameLoop:
                 if not pressed:
                     continue
 
-                if pressed == [expected_button]:
+                print(f"Button pressed: {', '.join(pressed)}")
+
+                if set(pressed) == set(expected_buttons):
                     return True
                 else:
-                    # Wrong finger (or multiple fingers)
+                    # Wrong finger(s)
                     return False
 
             time.sleep(0.01)
@@ -50,10 +52,10 @@ class GameLoop:
             self.audio.play("intro")
 
             # 2-4. Each task
-            for intro_track, expected_button in self.tasks:
+            for intro_track, expected_buttons in self.tasks:
                 self.audio.play(intro_track)
 
-                success = self.wait_for_press(expected_button)
+                success = self.wait_for_press(expected_buttons)
                 if not success:
                     self.audio.play("game_over")
                     return

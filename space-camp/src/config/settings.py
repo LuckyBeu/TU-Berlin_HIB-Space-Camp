@@ -1,22 +1,29 @@
 # Configuration settings for the Space Camp game
 
+import os
+
+# Project root, resolved relative to this file so paths work from any CWD
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+AUDIO_DIR = os.path.join(PROJECT_ROOT, "assets", "audio")
+
 # Audio track file paths
 AUDIO_TRACKS = {
-    "intro": "assets/audio/intro.wav",              # played at game start
-    "exercise_1": "assets/audio/exercise_1.wav",    # before start task 1
-    "exercise_2": "assets/audio/exercise_2.wav",    # before start task 2
-    "exercise_3": "assets/audio/exercise_3.wav",    # before start task 3
-    "game_over": "assets/audio/game_over.wav",      # on failure
-    "congrats": "assets/audio/congrats.wav",        # game won
+    "intro": os.path.join(AUDIO_DIR, "intro.wav"),              # played at game start
+    "exercise_1": os.path.join(AUDIO_DIR, "exercise_1.wav"),    # before start task 1
+    "exercise_2": os.path.join(AUDIO_DIR, "exercise_2.wav"),    # before start task 2
+    "exercise_3": os.path.join(AUDIO_DIR, "exercise_3.wav"),    # before start task 3
+    "game_over": os.path.join(AUDIO_DIR, "game_over.wav"),      # on failure
+    "congrats": os.path.join(AUDIO_DIR, "congrats.wav"),        # game won
 }
 
 # Timing settings
-COUNTDOWN_TIME = 30  # Time in seconds for each task
+COUNTDOWN_TIME = 10  # Time in seconds for each task
 BUTTON_DEBOUNCE_TIME = 0.2  # Debounce time in seconds for button presses
 
 # GPIO pin settings
 BUTTON_PINS = {
-    "button1": 17,
-    "button2": 27,
-    "button3": 22,
+    "button1": 17, # index finger
+    "button2": 27, # middle finger
+    "button3": 22, # ring finger
+    "button4": 10, # pinky finger
 }
