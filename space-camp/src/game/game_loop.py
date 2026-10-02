@@ -48,6 +48,9 @@ class GameLoop:
 
     def run(self):
         try:
+            # Background ambience loops for the whole game
+            self.audio.start_loop("background")
+
             # 1. Start -> intro
             self.audio.play("intro")
 
@@ -64,4 +67,5 @@ class GameLoop:
             self.audio.play("congrats")
 
         finally:
+            self.audio.stop_loop()
             self.glove.cleanup()
