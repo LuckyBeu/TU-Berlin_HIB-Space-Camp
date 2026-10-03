@@ -1,0 +1,68 @@
+# ===== HARDWARE CONFIGURATION =====
+LED_PIN = 0               # GPIO data line for WS2812
+LED_COUNT = 256           # 8x32 = 256 LEDs
+DISPLAY_WIDTH = 32
+DISPLAY_HEIGHT = 8
+DEFAULT_BRIGHTNESS = 0.1  # 0.0 to 1.0
+
+# ===== NETWORK CONFIGURATION =====
+WIFI_SSID = "SpaceCamp"       # Access Point SSID (Raspberry Pi 3)
+WIFI_PASSWORD = "spacecamp123"
+UDP_PORT = 5005               # Port for countdown broadcasts
+WIFI_CONNECT_TIMEOUT = 15     # seconds
+
+# ===== COLOR DEFINITIONS (R, G, B) =====
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+YELLOW = (255, 255, 0)
+CYAN = (0, 255, 255)
+MAGENTA = (255, 0, 255)
+ORANGE = (255, 80, 0)
+
+# ===== COUNTDOWN DISPLAY COLORS =====
+NORMAL_COLOR = CYAN       # color while counting down
+WARNING_COLOR = ORANGE    # color when < WARNING_THRESHOLD_S
+CRITICAL_COLOR = RED      # color when < CRITICAL_THRESHOLD_S
+FINISHED_COLOR = RED      # color when time is up (blinks)
+SEPARATOR_COLOR = WHITE
+
+WARNING_THRESHOLD_S = 10
+CRITICAL_THRESHOLD_S = 5
+
+# ===== COUNTDOWN STATES =====
+STATE_IDLE = 0        # waiting for a command
+STATE_RUNNING = 1     # counting down
+STATE_PAUSED = 2      # paused
+STATE_FINISHED = 3    # reached zero
+
+# ===== FONT DEFINITION (5x7) =====
+FONT_5X7 = {
+    '0': [0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110],
+    '1': [0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+    '2': [0b01110, 0b10001, 0b00001, 0b00110, 0b01000, 0b10000, 0b11111],
+    '3': [0b01110, 0b10001, 0b00001, 0b00110, 0b00001, 0b10001, 0b01110],
+    '4': [0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010],
+    '5': [0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110],
+    '6': [0b00110, 0b01000, 0b10000, 0b11110, 0b10001, 0b10001, 0b01110],
+    '7': [0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b10000],
+    '8': [0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110],
+    '9': [0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00010, 0b01100],
+    # Letters (uppercase)
+    'A': [0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001],
+    'C': [0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110],
+    'D': [0b11110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b11110],
+    'E': [0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111],
+    'I': [0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110],
+    'N': [0b10001, 0b11001, 0b11001, 0b10101, 0b10011, 0b10011, 0b10001],
+    'O': [0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110],
+    'T': [0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100],
+    # Punctuation / space
+    ' ': [0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b00000],
+    '!': [0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100],
+}
+
+# ===== DISPLAY UPDATE =====
+DISPLAY_FPS = 30          # frames per second for rendering
