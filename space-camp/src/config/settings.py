@@ -12,7 +12,7 @@ AUDIO_TRACKS = {
     "exercise_1": os.path.join(AUDIO_DIR, "exercise_1.wav"),            # before start task 1
     "exercise_2": os.path.join(AUDIO_DIR, "exercise_2.wav"),            # before start task 2
     "exercise_3": os.path.join(AUDIO_DIR, "exercise_3.wav"),            # before start task 3
-    "game_over": os.path.join(AUDIO_DIR, "game_over.wav"),              # on failure
+    "game_over": os.path.join(AUDIO_DIR, "game_over.wav"),              # game over
     "congrats": os.path.join(AUDIO_DIR, "congrats.wav"),                # game won
     "background": os.path.join(AUDIO_DIR, "helicopter-on-mars.wav"),    # background noise
 }
@@ -27,4 +27,11 @@ BUTTON_PINS = {
     "button2": 27, # middle finger
     "button3": 22, # ring finger
     "button4": 10, # pinky finger
+}
+
+LED_PINS = {
+    "led1": 14, # index finger
+    "led2": 15, # middle finger
+    "led3": 18, # ring finger
+    "led4": 23, # pinky finger
 }

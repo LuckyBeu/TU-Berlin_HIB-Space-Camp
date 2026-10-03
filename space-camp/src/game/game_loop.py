@@ -11,8 +11,8 @@ class GameLoop:
         # Each task: the intro audio, and the expected button name(s)
         self.tasks = [
             ("exercise_1", ["button1"]),             # index finger
-            ("exercise_2", ["button2"]),             # middle finger
-            ("exercise_3", ["button1", "button2"]),  # index + middle together
+            ("exercise_2", ["button2", "button4"]),  # middle + pinky finger
+            ("exercise_3", ["button1", "button3"]),  # index + middle together
         ]
 
     def wait_for_press(self, expected_buttons):
@@ -56,9 +56,17 @@ class GameLoop:
 
             # 2-4. Each task
             for intro_track, expected_buttons in self.tasks:
+
                 self.audio.play(intro_track)
 
+                # Light the LEDs for the fingers that must be pressed
+                expected_leds = [b.replace("button", "led") for b in expected_buttons]
+                self.glove.set_leds(expected_leds, on=True)
+
                 success = self.wait_for_press(expected_buttons)
+
+                self.glove.all_leds_off()
+
                 if not success:
                     self.audio.play("game_over")
                     return
@@ -68,4 +76,5 @@ class GameLoop:
 
         finally:
             self.audio.stop_loop()
+            self.glove.all_leds_off()
             self.glove.cleanup()
