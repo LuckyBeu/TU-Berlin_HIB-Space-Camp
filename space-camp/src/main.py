@@ -5,7 +5,7 @@ from game.game_loop import GameLoop
 
 
 def main():
-    glove = Glove(settings.BUTTON_PINS)
+    glove = Glove(settings.BUTTON_PINS, settings.LED_PINS)
     audio = AudioPlayer(settings.AUDIO_TRACKS)
     game = GameLoop(
         glove=glove,
