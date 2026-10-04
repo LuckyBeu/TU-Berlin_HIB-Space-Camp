@@ -6,6 +6,12 @@ import os
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 AUDIO_DIR = os.path.join(PROJECT_ROOT, "assets", "audio")
 
+# Countdown network settings
+UDP_PORT = 5005
+BROADCAST_ADDR = "192.168.4.255"   # subnet broadcast of the AP (wlan0) network
+AP_BIND_IP = "192.168.4.1"         # the Pi's AP interface address
+SYNC_INTERVAL = 1.0  # seconds between sync packets
+
 # Audio track file paths
 AUDIO_TRACKS = {
     "intro": os.path.join(AUDIO_DIR, "intro.wav"),                      # played at game start

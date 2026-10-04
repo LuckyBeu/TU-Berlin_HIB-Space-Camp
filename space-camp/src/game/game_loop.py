@@ -2,11 +2,13 @@ import time
 
 
 class GameLoop:
-    def __init__(self, glove, audio_player, countdown_time, debounce_time):
+    def __init__(self, glove, audio_player, countdown_time, debounce_time,
+                 countdown_server=None):
         self.glove = glove
         self.audio = audio_player
         self.countdown_time = countdown_time
         self.debounce_time = debounce_time
+        self.countdown_server = countdown_server   # drives the Pico display
 
         # Each task: the intro audio, and the expected button name(s)
         self.tasks = [
@@ -19,32 +21,41 @@ class GameLoop:
         """Wait for a button press within the countdown time.
         Returns True if exactly the expected button(s) were pressed,
         False on wrong button(s) or timeout."""
-        deadline = time.time() + self.countdown_time
-        while time.time() < deadline:
-            buttons = self.glove.read_buttons()
-            pressed = [name for name, state in buttons.items() if state]
+        # Start the countdown on the Pico display
+        if self.countdown_server:
+            self.countdown_server.start(self.countdown_time)
 
-            if pressed:
-                # Debounce
-                time.sleep(self.debounce_time)
+        deadline = time.time() + self.countdown_time
+        try:
+            while time.time() < deadline:
                 buttons = self.glove.read_buttons()
                 pressed = [name for name, state in buttons.items() if state]
 
-                if not pressed:
-                    continue
+                if pressed:
+                    # Debounce
+                    time.sleep(self.debounce_time)
+                    buttons = self.glove.read_buttons()
+                    pressed = [name for name, state in buttons.items() if state]
 
-                print(f"Button pressed: {', '.join(pressed)}")
+                    if not pressed:
+                        continue
 
-                if set(pressed) == set(expected_buttons):
-                    return True
-                else:
-                    # Wrong finger(s)
-                    return False
+                    print(f"Button pressed: {', '.join(pressed)}")
 
-            time.sleep(0.01)
+                    if set(pressed) == set(expected_buttons):
+                        return True
+                    else:
+                        # Wrong finger(s)
+                        return False
 
-        # Timeout
-        return False
+                time.sleep(0.01)
+
+            # Timeout
+            return False
+        finally:
+            # Clear the Pico display when the task ends
+            if self.countdown_server:
+                self.countdown_server.reset()
 
     def run(self):
         try:

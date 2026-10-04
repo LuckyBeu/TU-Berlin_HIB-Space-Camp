@@ -1,23 +1,32 @@
-import time
+"""Game-level countdown.
+
+Thin, non-blocking wrapper around the network CountdownServer. The server
+holds the authoritative time and broadcasts it to the Pico displays.
+"""
+from network.countdown_server import CountdownServer
+
 
 class Countdown:
-    def __init__(self, duration):
+    def __init__(self, duration, server=None):
         self.duration = duration
-        self.remaining_time = duration
-        self.running = False
+        self.server = server or CountdownServer()
 
     def start(self):
-        self.running = True
-        self.remaining_time = self.duration
-        while self.remaining_time > 0 and self.running:
-            time.sleep(1)
-            self.remaining_time -= 1
+        """Start the countdown (non-blocking). Picos update automatically."""
+        self.server.start(self.duration)
 
     def stop(self):
-        self.running = False
+        self.server.reset()
+
+    def pause(self):
+        self.server.pause()
+
+    def resume(self):
+        self.server.resume()
 
     def get_remaining_time(self):
-        return self.remaining_time
+        """Remaining time in whole seconds."""
+        return self.server.get_remaining_ms() // 1000
 
     def is_running(self):
-        return self.running
+        return self.server.is_running()

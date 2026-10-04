@@ -218,4 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 # Audio assets (too large for Git)
-space-camp/assets/audio/*.wav
+space-camp/assets/audio/background.wav
