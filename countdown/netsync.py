@@ -82,25 +82,37 @@ class UdpListener:
     """Non-blocking UDP listener that yields parsed command dicts."""
 
     def __init__(self, port=config.UDP_PORT):
+        self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.bind(("0.0.0.0", port))
         self.sock.setblocking(False)
+        self.last_sender = None   # (ip, port) of the most recent packet
 
     def poll(self):
-        """Return the most recent parsed command dict, or None if nothing waiting.
-
-        Drains the socket so we always act on the newest packet (important for
-        'sync' commands that would otherwise pile up).
-        """
+        """Return the most recent parsed command dict, or None if nothing waiting."""
         latest = None
         while True:
             try:
-                data, _ = self.sock.recvfrom(256)
+                data, addr = self.sock.recvfrom(256)
             except OSError:
                 break  # no more datagrams
+            self.last_sender = addr
             try:
                 latest = json.loads(data)
             except (ValueError, TypeError):
                 continue  # ignore malformed packets
         return latest
+
+    def send(self, payload, addr=None):
+        """Send a JSON payload back (defaults to the last sender's IP)."""
+        target_ip = (addr or self.last_sender or ("255.255.255.255", 0))[0]
+        data = json.dumps(payload).encode()
+        try:
+            self.sock.sendto(data, (target_ip, self.port))
+        except OSError as e:
+            print("[udp] send failed:", e)
+
+    def send_result(self, win):
+        """Report a minigame result back to the Pi."""
+        self.send({"cmd": "result", "win": bool(win)})

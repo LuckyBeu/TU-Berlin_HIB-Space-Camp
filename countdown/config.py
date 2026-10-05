@@ -66,3 +66,41 @@ FONT_5X7 = {
 
 # ===== DISPLAY UPDATE =====
 DISPLAY_FPS = 30          # frames per second for rendering
+
+# ---------------------------------------------------------------------------
+# Docking minigame (station 2)
+# ---------------------------------------------------------------------------
+DOCK_FIELD_WIDTH = 32
+DOCK_FIELD_HEIGHT = 8
+DOCK_ROCKET_WIDTH = 3
+
+# Phase 1: flight (rocket fixed on the LEFT, world scrolls left)
+DOCK_ROCKET_X = 1                 # rocket occupies columns 1,2,3
+DOCK_START_ROW = 3                # start mid-field (room to maneuver up/down)
+DOCK_SCROLL_INTERVAL_MS = 200     # world scrolls 1px every 0.2s (5 px/s)
+DOCK_GRAVITY_ENABLED = False      # gravity off for now (manual up/down only)
+DOCK_GRAVITY_INTERVAL_MS = 1000   # gentler: 1 row down every 1.0s
+DOCK_OBSTACLE_SPAWN_MS = 2000     # new obstacle every 3.0s (half as many)
+DOCK_OBSTACLE_V_INTERVAL_MS = 400 # obstacle moves 1 row vertically every 0.4s
+
+# Phase 2: docking (station fixed right, rocket drives toward it)
+DOCK_STATION_APPEAR_MS = 55000     # TEMP: station appears at 8s for quick testing
+DOCK_APPROACH_INTERVAL_MS = 300   # rocket moves 1px right every 0.3s
+DOCK_STATION_X = 31               # station column (rightmost)
+DOCK_TARGET_ROW = 5               # fixed docking target row
+DOCK_ZONE_HEIGHT = 2              # green zone height (target highlighted)
+
+# General
+DOCK_FRAME_INTERVAL_MS = 66       # ~15 FPS
+DOCK_GAME_DURATION_MS = 60000     # 60s safety timeout
+
+# Buttons (local to the Pico)
+DOCK_BTN_UP_PIN = 7
+DOCK_BTN_DOWN_PIN = 8
+DOCK_BTN_DEBOUNCE_MS = 20
+
+# Docking colors (reuse existing color constants)
+DOCK_COLOR_ROCKET = WHITE
+DOCK_COLOR_OBSTACLE = MAGENTA
+DOCK_COLOR_STATION = GREEN
+DOCK_COLOR_TARGET = GREEN
