@@ -33,6 +33,7 @@ class CountdownServer:
         # Bind to the AP interface so broadcasts leave via wlan0
         try:
             self.sock.bind((AP_BIND_IP, 0))
+            print("[server] bound to {} -> {}".format(AP_BIND_IP, self.sock.getsockname()))  # DEBUG
         except OSError as e:
             print("Warning: could not bind to {}: {}".format(AP_BIND_IP, e))
         self.port = port
@@ -48,6 +49,7 @@ class CountdownServer:
 
     def _send(self, payload):
         data = json.dumps(payload).encode()
+        print("[server] sending to {}:{} -> {}".format(BROADCAST_ADDR, self.port, payload))  # DEBUG
         self.sock.sendto(data, (BROADCAST_ADDR, self.port))
 
     def _tick_unlocked(self):
@@ -117,6 +119,38 @@ class CountdownServer:
     def close(self):
         self._stop = True
         self.sock.close()
+
+    # -- minigame control ---------------------------------------------------
+    def start_game(self, mode):
+        """Tell the Pico to start a minigame (e.g. 'docking')."""
+        with self._lock:
+            self._send({"cmd": "game", "mode": mode})
+
+    def wait_for_result(self, timeout=70):
+        """Block until the Pico reports a result, or until timeout.
+
+        Returns True (win), False (loss), or None (timeout).
+        Listens on the same UDP port for a {"cmd":"result","win":bool} packet.
+        """
+        # Receiving socket bound to the broadcast port
+        rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        rx.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        rx.bind(("", self.port))
+        rx.settimeout(timeout)
+        try:
+            while True:
+                try:
+                    data, _ = rx.recvfrom(256)
+                except socket.timeout:
+                    return None
+                try:
+                    msg = json.loads(data)
+                except ValueError:
+                    continue
+                if msg.get("cmd") == "result":
+                    return bool(msg.get("win"))
+        finally:
+            rx.close()
 
 
 def main():

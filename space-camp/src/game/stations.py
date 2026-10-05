@@ -1,23 +1,50 @@
+"""Station definitions for the Space Camp game.
+
+Each station represents one task. Modes:
+  - "task":    press the expected glove button(s).
+  - "docking": run the docking minigame on the Pico.
+"""
+
+
 class Station:
-    def __init__(self, name, task_description, correct_input):
+    def __init__(self, name, audio_track, expected_buttons=None,
+                 mode="task", duration=None):
+        """
+        Args:
+            name: human-readable station name (for logs/debugging).
+            audio_track: key of the intro audio clip to play.
+            expected_buttons: list of button names (for mode="task").
+            mode: "task" or "docking".
+            duration: minigame duration in seconds (for mode="docking").
+        """
         self.name = name
-        self.task_description = task_description
-        self.correct_input = correct_input
+        self.audio_track = audio_track
+        self.expected_buttons = expected_buttons or []
+        self.mode = mode
+        self.duration = duration
         self.completed = False
 
-    def validate_input(self, user_input):
-        if user_input == self.correct_input:
+    def validate_input(self, pressed_buttons):
+        """Return True if exactly the expected buttons were pressed."""
+        if set(pressed_buttons) == set(self.expected_buttons):
             self.completed = True
             return True
         return False
 
-    def get_task_info(self):
-        return f"Task: {self.task_description} (Station: {self.name})"
+    @property
+    def expected_leds(self):
+        """LED names corresponding to the expected buttons."""
+        return [b.replace("button", "led") for b in self.expected_buttons]
+
+    def __repr__(self):
+        return "Station(name={!r}, track={!r}, mode={!r})".format(
+            self.name, self.audio_track, self.mode)
+
 
 def create_stations():
-    stations = [
-        Station("Launch Pad", "Press the button to launch the rocket!", "A"),
-        Station("Orbit", "Press the button to enter orbit!", "B"),
-        Station("Landing", "Press the button to land safely!", "C"),
+    """Define the sequence of stations (tasks) for one game run."""
+    return [
+        Station("Launch Pad", "exercise_1", ["button1"]),                 # index finger
+        Station("Docking",    "exercise_2", mode="docking", duration=60),  # minigame
+        Station("Landing",    "exercise_3", ["button1", "button3"]),       # index + middle
     ]
-    return stations

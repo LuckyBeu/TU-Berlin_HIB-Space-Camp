@@ -1,27 +1,26 @@
 import time
 
+from game.stations import create_stations
+
 
 class GameLoop:
     def __init__(self, glove, audio_player, countdown_time, debounce_time,
-                 countdown_server=None):
+                 countdown_server=None, stations=None):
         self.glove = glove
         self.audio = audio_player
         self.countdown_time = countdown_time
         self.debounce_time = debounce_time
         self.countdown_server = countdown_server   # drives the Pico display
 
-        # Each task: the intro audio, and the expected button name(s)
-        self.tasks = [
-            ("exercise_1", ["button1"]),             # index finger
-            ("exercise_2", ["button2", "button4"]),  # middle + pinky finger
-            ("exercise_3", ["button1", "button3"]),  # index + middle together
-        ]
+        # Stations define the tasks; injectable for easy testing/variation
+        self.stations = stations if stations is not None else create_stations()
 
-    def wait_for_press(self, expected_buttons):
+    def wait_for_press(self, station):
         """Wait for a button press within the countdown time.
-        Returns True if exactly the expected button(s) were pressed,
-        False on wrong button(s) or timeout."""
-        # Start the countdown on the Pico display
+
+        Returns True if exactly the station's expected button(s) were
+        pressed, False on wrong button(s) or timeout.
+        """
         if self.countdown_server:
             self.countdown_server.start(self.countdown_time)
 
@@ -40,41 +39,29 @@ class GameLoop:
                     if not pressed:
                         continue
 
-                    print(f"Button pressed: {', '.join(pressed)}")
-
-                    if set(pressed) == set(expected_buttons):
-                        return True
-                    else:
-                        # Wrong finger(s)
-                        return False
+                    print("Button pressed: {}".format(", ".join(pressed)))
+                    return station.validate_input(pressed)
 
                 time.sleep(0.01)
 
-            # Timeout
-            return False
+            return False  # timeout
         finally:
-            # Clear the Pico display when the task ends
             if self.countdown_server:
                 self.countdown_server.reset()
 
     def run(self):
         try:
-            # Background ambience loops for the whole game
             self.audio.start_loop("background")
-
-            # 1. Start -> intro
             self.audio.play("intro")
 
-            # 2-4. Each task
-            for intro_track, expected_buttons in self.tasks:
-
-                self.audio.play(intro_track)
+            for station in self.stations:
+                print("Starting station:", station.name)
+                self.audio.play(station.audio_track)
 
                 # Light the LEDs for the fingers that must be pressed
-                expected_leds = [b.replace("button", "led") for b in expected_buttons]
-                self.glove.set_leds(expected_leds, on=True)
+                self.glove.set_leds(station.expected_leds, on=True)
 
-                success = self.wait_for_press(expected_buttons)
+                success = self.wait_for_press(station)
 
                 self.glove.all_leds_off()
 
@@ -82,7 +69,7 @@ class GameLoop:
                     self.audio.play("game_over")
                     return
 
-            # All tasks solved
+            # All stations solved
             self.audio.play("congrats")
 
         finally:
