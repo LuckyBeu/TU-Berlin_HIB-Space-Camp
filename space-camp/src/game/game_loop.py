@@ -49,6 +49,24 @@ class GameLoop:
             if self.countdown_server:
                 self.countdown_server.reset()
 
+    def run_minigame(self, station):
+        """Start a Pico-based minigame and wait for its result.
+
+        Mirrors the docking flow for both 'docking' and 'kabelsalat'.
+        """
+        if not self.countdown_server:
+            print("No countdown_server configured; cannot run minigame.")
+            return False
+
+        duration_s = (station.duration or self.countdown_time)
+        self.countdown_server.start_game(station.mode)
+        result = self.countdown_server.wait_for_result(timeout=duration_s + 10)
+
+        if result is None:
+            print("Minigame '{}' timed out.".format(station.mode))
+            return False
+        return result
+
     def run(self):
         try:
             self.audio.start_loop("background")
@@ -58,18 +76,18 @@ class GameLoop:
                 print("Starting station:", station.name)
                 self.audio.play(station.audio_track)
 
-                # Light the LEDs for the fingers that must be pressed
-                self.glove.set_leds(station.expected_leds, on=True)
-
-                success = self.wait_for_press(station)
-
-                self.glove.all_leds_off()
+                if station.mode in ("docking", "kabelsalat"):
+                    success = self.run_minigame(station)
+                else:
+                    # glove-based task (finger_yoga)
+                    self.glove.set_leds(station.expected_leds, on=True)
+                    success = self.wait_for_press(station)
+                    self.glove.all_leds_off()
 
                 if not success:
                     self.audio.play("game_over")
                     return
 
-            # All stations solved
             self.audio.play("congrats")
 
         finally:

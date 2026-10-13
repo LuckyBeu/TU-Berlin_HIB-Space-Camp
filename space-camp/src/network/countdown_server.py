@@ -17,13 +17,6 @@ import json
 import threading
 import time
 
-from config.settings import (
-    UDP_PORT,
-    BROADCAST_ADDR,
-    AP_BIND_IP,
-    SYNC_INTERVAL,
-)
-
 
 class CountdownServer:
     def __init__(self, port=UDP_PORT):
@@ -122,35 +115,33 @@ class CountdownServer:
 
     # -- minigame control ---------------------------------------------------
     def start_game(self, mode):
-        """Tell the Pico to start a minigame (e.g. 'docking')."""
-        with self._lock:
-            self._send({"cmd": "game", "mode": mode})
+        """Tell the matching Pico slave to start its minigame."""
+        payload = {"cmd": "game", "mode": mode}
+        data = json.dumps(payload).encode()
+        self.sock.sendto(data, (self.broadcast_addr, self.udp_port))
+        print("[server] sent game start:", mode)
 
     def wait_for_result(self, timeout=70):
-        """Block until the Pico reports a result, or until timeout.
+        """Block until a {'cmd':'result','win':bool} arrives, or timeout.
 
-        Returns True (win), False (loss), or None (timeout).
-        Listens on the same UDP port for a {"cmd":"result","win":bool} packet.
+        Returns True/False on a result, or None on timeout.
         """
-        # Receiving socket bound to the broadcast port
-        rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        rx.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        rx.bind(("", self.port))
-        rx.settimeout(timeout)
-        try:
-            while True:
-                try:
-                    data, _ = rx.recvfrom(256)
-                except socket.timeout:
-                    return None
-                try:
-                    msg = json.loads(data)
-                except ValueError:
-                    continue
-                if msg.get("cmd") == "result":
-                    return bool(msg.get("win"))
-        finally:
-            rx.close()
+        self.sock.settimeout(0.5)
+        deadline = time.time() + timeout
+        while time.time() < deadline:
+            try:
+                data, addr = self.sock.recvfrom(256)
+            except socket.timeout:
+                continue
+            except OSError:
+                continue
+            try:
+                msg = json.loads(data)
+            except (ValueError, TypeError):
+                continue
+            if msg.get("cmd") == "result":
+                return bool(msg.get("win"))
+        return None
 
 
 def main():
