@@ -67,6 +67,60 @@ class GameLoop:
             return False
         return result
 
+    def run_finger_yoga(self, station):
+        """Play the finger-yoga sequence.
+
+        For each button in station.sequence, light its LED and wait for the
+        player to press exactly that button within the countdown time.
+        Returns True if the whole sequence is completed, else False.
+        """
+        for step, button in enumerate(station.sequence, start=1):
+            led = button.replace("button", "led")
+            print("Finger Yoga step {}/{}: press {}".format(
+                step, len(station.sequence), button))
+
+            self.glove.all_leds_off()
+            self.glove.set_led(led, True)
+
+            success = self._wait_for_single_button(button)
+
+            self.glove.all_leds_off()
+            if not success:
+                return False
+        return True
+
+    def _wait_for_single_button(self, expected_button):
+        """Wait for a single correct button press within countdown_time.
+
+        Returns True on the correct button, False on wrong button or timeout.
+        """
+        deadline = time.time() + self.countdown_time
+        while time.time() < deadline:
+            buttons = self.glove.read_buttons()
+            pressed = [name for name, state in buttons.items() if state]
+
+            if pressed:
+                time.sleep(self.debounce_time)
+                buttons = self.glove.read_buttons()
+                pressed = [name for name, state in buttons.items() if state]
+                if not pressed:
+                    continue
+
+                if pressed == [expected_button]:
+                    print("Button pressed:", expected_button)
+                    # wait for release to avoid double-counting
+                    while any(self.glove.read_buttons().values()):
+                        time.sleep(0.01)
+                    return True
+                else:
+                    print("Wrong button(s):", pressed)
+                    return False
+
+            time.sleep(0.01)
+
+        print("Timeout waiting for", expected_button)
+        return False
+
     def run(self):
         try:
             self.audio.start_loop("background")
@@ -78,8 +132,9 @@ class GameLoop:
 
                 if station.mode in ("docking", "kabelsalat"):
                     success = self.run_minigame(station)
+                elif station.mode == "finger_yoga":
+                    success = self.run_finger_yoga(station)
                 else:
-                    # glove-based task (finger_yoga)
                     self.glove.set_leds(station.expected_leds, on=True)
                     success = self.wait_for_press(station)
                     self.glove.all_leds_off()

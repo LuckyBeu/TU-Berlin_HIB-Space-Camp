@@ -17,6 +17,8 @@ import json
 import threading
 import time
 
+from config.settings import UDP_PORT, AP_BIND_IP, BROADCAST_ADDR, SYNC_INTERVAL
+
 
 class CountdownServer:
     def __init__(self, port=UDP_PORT):
@@ -25,11 +27,11 @@ class CountdownServer:
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # Bind to the AP interface so broadcasts leave via wlan0
         try:
-            self.sock.bind((AP_BIND_IP, 0))
-            print("[server] bound to {} -> {}".format(AP_BIND_IP, self.sock.getsockname()))  # DEBUG
+            self.sock.bind((AP_BIND_IP, UDP_PORT))
+            print("[server] bound to {} -> {}".format(AP_BIND_IP, self.sock.getsockname()))
         except OSError as e:
             print("Warning: could not bind to {}: {}".format(AP_BIND_IP, e))
-        self.port = port
+        self.port = UDP_PORT
 
         self.remaining_ms = 0
         self.running = False
@@ -116,9 +118,7 @@ class CountdownServer:
     # -- minigame control ---------------------------------------------------
     def start_game(self, mode):
         """Tell the matching Pico slave to start its minigame."""
-        payload = {"cmd": "game", "mode": mode}
-        data = json.dumps(payload).encode()
-        self.sock.sendto(data, (self.broadcast_addr, self.udp_port))
+        self._send({"cmd": "game", "mode": mode})
         print("[server] sent game start:", mode)
 
     def wait_for_result(self, timeout=70):
@@ -128,20 +128,23 @@ class CountdownServer:
         """
         self.sock.settimeout(0.5)
         deadline = time.time() + timeout
-        while time.time() < deadline:
-            try:
-                data, addr = self.sock.recvfrom(256)
-            except socket.timeout:
-                continue
-            except OSError:
-                continue
-            try:
-                msg = json.loads(data)
-            except (ValueError, TypeError):
-                continue
-            if msg.get("cmd") == "result":
-                return bool(msg.get("win"))
-        return None
+        try:
+            while time.time() < deadline:
+                try:
+                    data, addr = self.sock.recvfrom(256)
+                except socket.timeout:
+                    continue
+                except OSError:
+                    continue
+                try:
+                    msg = json.loads(data)
+                except (ValueError, TypeError):
+                    continue
+                if msg.get("cmd") == "result":
+                    return bool(msg.get("win"))
+            return None
+        finally:
+            self.sock.setblocking(True)
 
 
 def main():

@@ -171,15 +171,24 @@ class DockingGame:
 
     # -- main loop ----------------------------------------------------------
     def run(self):
-        """Run the game. Returns True on successful docking, else False."""
+        """Run the docking minigame.
+
+        Returns True if the rocket successfully docks, False on crash
+        or timeout.
+        """
         self._reset()
 
         while True:
             now = time.ticks_ms()
             elapsed = time.ticks_diff(now, self.start_ms)
 
-            # keep draining network packets so the socket doesn't back up
-            if self.listener:
+            # global safety timeout
+            if elapsed >= config.DOCK_GAME_DURATION_MS:
+                self._flash(config.RED)
+                return False
+
+            # keep draining network packets so the socket buffer stays clear
+            if self.listener is not None:
                 self.listener.poll()
 
             # frame pacing
@@ -189,47 +198,51 @@ class DockingGame:
             self._last_frame = now
 
             up_edge, down_edge = self._read_buttons()
+            self._apply_input(up_edge, down_edge)
+            self._apply_gravity(now)
 
-            # phase transition
-            if self.phase == 1 and elapsed >= config.DOCK_STATION_APPEAR_MS:
-                self.phase = 2
-                self._last_approach = now
-
+            # ---------------- Phase 1: flight ----------------
             if self.phase == 1:
                 self._spawn_obstacle(now)
                 self._scroll_world(now)
                 self._move_obstacles_v(now)
-                self._apply_input(up_edge, down_edge)
-                self._apply_gravity(now)
 
                 if self._check_collision():
-                    self._flash(config.DOCK_COLOR_OBSTACLE)
+                    self._flash(config.RED)
                     return False
+
+                # transition to docking phase
+                if elapsed >= config.DOCK_STATION_APPEAR_MS:
+                    self.phase = 2
+                    self._last_approach = now
+
                 self._draw()
 
-            else:  # phase 2: docking
+            # ---------------- Phase 2: docking ----------------
+            else:
+                # existing obstacles scroll out, no new spawns
                 self._scroll_world(now)
                 self._move_obstacles_v(now)
-                self._apply_input(up_edge, down_edge)
-                self._apply_gravity(now)
 
+                if self._check_collision():
+                    self._flash(config.RED)
+                    return False
+
+                # drive the rocket toward the station
                 if time.ticks_diff(now, self._last_approach) >= config.DOCK_APPROACH_INTERVAL_MS:
                     self._last_approach = now
                     if self.rocket_x + self.rw - 1 < config.DOCK_STATION_X:
                         self.rocket_x += 1
-
-                if self._check_collision():
-                    self._flash(config.DOCK_COLOR_OBSTACLE)
-                    return False
+                    else:
+                        # rocket reached the station column -> check docking
+                        if self.rocket_row == config.DOCK_TARGET_ROW:
+                            self._flash(config.GREEN)
+                            return True
+                        else:
+                            self._flash(config.RED)
+                            return False
 
                 self._draw(station_x=config.DOCK_STATION_X)
 
-                # docking check: rocket tip reached the station column
-                if self.rocket_x + self.rw - 1 >= config.DOCK_STATION_X:
-                    win = (self.rocket_row == config.DOCK_TARGET_ROW)
-                    self._flash(config.DOCK_COLOR_TARGET if win
-                                else config.DOCK_COLOR_OBSTACLE)
-                    return win
+            time.sleep_ms(2)
 
-            if elapsed >= config.DOCK_GAME_DURATION_MS:
-                return False

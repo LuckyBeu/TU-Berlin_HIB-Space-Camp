@@ -84,7 +84,7 @@ DOCK_OBSTACLE_SPAWN_MS = 2000     # new obstacle every 3.0s (half as many)
 DOCK_OBSTACLE_V_INTERVAL_MS = 400 # obstacle moves 1 row vertically every 0.4s
 
 # Phase 2: docking (station fixed right, rocket drives toward it)
-DOCK_STATION_APPEAR_MS = 55000     # TEMP: station appears at 8s for quick testing
+DOCK_STATION_APPEAR_MS = 10000     # TEMP: station appears at 8s for quick testing
 DOCK_APPROACH_INTERVAL_MS = 300   # rocket moves 1px right every 0.3s
 DOCK_STATION_X = 31               # station column (rightmost)
 DOCK_TARGET_ROW = 5               # fixed docking target row
@@ -95,8 +95,8 @@ DOCK_FRAME_INTERVAL_MS = 66       # ~15 FPS
 DOCK_GAME_DURATION_MS = 60000     # 60s safety timeout
 
 # Buttons (local to the Pico)
-DOCK_BTN_UP_PIN = 7
-DOCK_BTN_DOWN_PIN = 8
+DOCK_BTN_UP_PIN = 15
+DOCK_BTN_DOWN_PIN = 16
 DOCK_BTN_DEBOUNCE_MS = 20
 
 # Docking colors (reuse existing color constants)

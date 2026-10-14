@@ -17,7 +17,7 @@ def main():
         countdown_time=settings.COUNTDOWN_TIME,
         debounce_time=settings.BUTTON_DEBOUNCE_TIME,
         countdown_server=countdown_server,
-        stations=create_stations(),   # explicit = easy to swap later
+        stations=create_stations(list(settings.BUTTON_PINS.keys())),
     )
     game.run()
 
