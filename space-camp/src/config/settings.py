@@ -24,7 +24,9 @@ AUDIO_TRACKS = {
 }
 
 # Timing settings
-COUNTDOWN_TIME = 10  # Time in seconds for each task
+COUNTDOWN_TIME = 10  # Time in seconds for a generic combo task
+FINGER_YOGA_TIME = 30  # Total time for the whole Finger Yoga sequence
+KABELSALAT_TIME = 60  # Total time for the Kabelsalat minigame
 BUTTON_DEBOUNCE_TIME = 0.2  # Debounce time in seconds for button presses
 
 # GPIO pin settings

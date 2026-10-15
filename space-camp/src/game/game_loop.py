@@ -5,12 +5,18 @@ from game.stations import create_stations
 
 class GameLoop:
     def __init__(self, glove, audio_player, countdown_time, debounce_time,
-                 countdown_server=None, stations=None):
+                 countdown_server=None, stations=None,
+                 finger_yoga_time=None, kabelsalat_time=None):
         self.glove = glove
         self.audio = audio_player
         self.countdown_time = countdown_time
         self.debounce_time = debounce_time
         self.countdown_server = countdown_server   # drives the Pico display
+        # Whole-game time budgets (fall back to countdown_time if unset)
+        self.finger_yoga_time = (finger_yoga_time
+                                 if finger_yoga_time is not None else countdown_time)
+        self.kabelsalat_time = (kabelsalat_time
+                                if kabelsalat_time is not None else countdown_time)
 
         # Stations define the tasks; injectable for easy testing/variation
         self.stations = stations if stations is not None else create_stations()
@@ -58,9 +64,21 @@ class GameLoop:
             print("No countdown_server configured; cannot run minigame.")
             return False
 
-        duration_s = (station.duration or self.countdown_time)
+        if station.mode == "kabelsalat":
+            duration_s = self.kabelsalat_time
+        else:
+            duration_s = (station.duration or self.countdown_time)
         self.countdown_server.start_game(station.mode)
-        result = self.countdown_server.wait_for_result(timeout=duration_s + 10)
+        # Docking occupies the countdown display (rocket Pico) itself; for
+        # Kabelsalat that display is free, so show the countdown there.
+        show_countdown = station.mode != "docking"
+        if show_countdown:
+            self.countdown_server.start(duration_s)
+        try:
+            result = self.countdown_server.wait_for_result(timeout=duration_s + 10)
+        finally:
+            if show_countdown:
+                self.countdown_server.reset()
 
         if result is None:
             print("Minigame '{}' timed out.".format(station.mode))
@@ -68,33 +86,39 @@ class GameLoop:
         return result
 
     def run_finger_yoga(self, station):
-        """Play the finger-yoga sequence.
+        """Play the finger-yoga sequence within one shared time budget.
 
-        For each button in station.sequence, light its LED and wait for the
-        player to press exactly that button within the countdown time.
-        Returns True if the whole sequence is completed, else False.
+        The whole sequence must be completed within finger_yoga_time seconds
+        (not per button). Returns True if completed in time, else False.
         """
-        for step, button in enumerate(station.sequence, start=1):
-            led = button.replace("button", "led")
-            print("Finger Yoga step {}/{}: press {}".format(
-                step, len(station.sequence), button))
+        if self.countdown_server:
+            self.countdown_server.start(self.finger_yoga_time)
 
-            self.glove.all_leds_off()
-            self.glove.set_led(led, True)
+        deadline = time.time() + self.finger_yoga_time
+        try:
+            for step, button in enumerate(station.sequence, start=1):
+                led = button.replace("button", "led")
+                print("Finger Yoga step {}/{}: press {}".format(
+                    step, len(station.sequence), button))
 
-            success = self._wait_for_single_button(button)
+                self.glove.all_leds_off()
+                self.glove.set_led(led, True)
 
-            self.glove.all_leds_off()
-            if not success:
-                return False
-        return True
+                success = self._wait_for_single_button(button, deadline)
 
-    def _wait_for_single_button(self, expected_button):
-        """Wait for a single correct button press within countdown_time.
+                self.glove.all_leds_off()
+                if not success:
+                    return False
+            return True
+        finally:
+            if self.countdown_server:
+                self.countdown_server.reset()
+
+    def _wait_for_single_button(self, expected_button, deadline):
+        """Wait for a single correct button press until the shared deadline.
 
         Returns True on the correct button, False on wrong button or timeout.
         """
-        deadline = time.time() + self.countdown_time
         while time.time() < deadline:
             buttons = self.glove.read_buttons()
             pressed = [name for name, state in buttons.items() if state]

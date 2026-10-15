@@ -18,6 +18,8 @@ def main():
         debounce_time=settings.BUTTON_DEBOUNCE_TIME,
         countdown_server=countdown_server,
         stations=create_stations(list(settings.BUTTON_PINS.keys())),
+        finger_yoga_time=settings.FINGER_YOGA_TIME,
+        kabelsalat_time=settings.KABELSALAT_TIME,
     )
     game.run()
 
